@@ -5,4 +5,8 @@
 - vmap
 - Cameras
 - 增加中文dbc解决机器人的技能问题
-- 解压使用rar或zip
+- 解压说明：
+   1. 若为分片文件（如dataxxx.zip.part00），请先合并：
+      - Linux/Mac: `cat dataxxx.zip.part* > dataxxx.zip`
+      - Windows: `copy /b dataxxx.zip.part* dataxxx.zip`
+   2. 再用rar或zip解压合并后的文件
