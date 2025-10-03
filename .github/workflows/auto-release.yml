@@ -1,90 +1,69 @@
 name: 自动打包并上传Release
 
-# 触发条件：仅当代码推送到 main 分支时执行
 on:
   push:
     branches: [ main ]
 
 jobs:
-  # 核心任务：打包地图数据并上传Release
   build-and-release:
     runs-on: ubuntu-latest
     steps:
-      # 步骤1：拉取仓库最新代码
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      # 步骤2：生成带时间戳的唯一文件名（避免冲突）
       - name: 设置压缩包名称
         id: set_filename
         run: |
-          # 生成格式为「年月日时分秒」的时间戳
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-          # 定义主压缩包名称（如：data20240520153000.zip）
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
-          # 定义分片文件前缀（如：data20240520153000.zip.part）
+          # 定义分片文件前缀（用于后续上传所有分片）
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
 
-      # 步骤3：使用zip打包核心数据，排除冗余文件
       - name: 打包文件（使用zip）
         run: |
           zip -r ${{ env.FILENAME }} . \
-            -x ".git/"          # 排除Git版本控制目录
-            -x ".gitignore"     # 排除Git忽略规则文件
-            -x ".github/workflows/"  # 排除GitHub Actions工作流配置目录
-            -x "*.zip"          # 排除已存在的zip压缩包
+            -x ".git/" -x ".gitignore" -x ".github/workflows/" -x "*.zip"
 
-      # 步骤4：超过1.8GB时自动拆分文件（规避GitHub 2GB单文件限制）
       - name: 拆分大文件（如果超过1.8GB）
         run: |
-          # 获取当前压缩包大小（单位：字节）
+          # 检查文件大小（单位：字节），超过1.8GB则拆分
           FILE_SIZE=$(stat -c%s "${{ env.FILENAME }}")
-          # 1.8GB对应的字节数（预留空间，避免接近2GB限制）
-          MAX_SIZE=1932735283
-
-          # 若文件超过1.8GB，执行拆分
-          if [ $FILE_SIZE -gt $MAX_SIZE ]; then
-            # 拆分为1.8GB/个的分片，数字后缀（如part00、part01）
+          if [ $FILE_SIZE -gt 1932735283 ]; then  # 1.8GB = 1932735283字节
+            # 拆分为多个1.8GB的分片（-b 1800m指定每个分片大小）
             split -b 1800m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
-            # 删除原始大文件，防止上传时触发大小限制
+            # 删除原始大文件（避免上传时触发限制）
             rm -f "${{ env.FILENAME }}"
           fi
 
-      # 步骤5：上传打包/分片文件到GitHub Release
       - name: 上传到Release（支持分片文件）
         uses: softprops/action-gh-release@v2
         with:
-          name: 自动打包-${{ env.FILENAME }}  # Release名称（含文件名，便于识别）
-          tag_name: ${{ env.FILENAME }}      # Release标签（与文件名一致，便于追溯）
-          # 上传文件：若拆分则传分片，未拆分则传原始zip
+          name: 自动打包-${{ env.FILENAME }}
+          tag_name: ${{ env.FILENAME }}
+          # 上传所有分片（如果拆分了）或原始文件
           files: |
             ${{ env.SPLIT_PREFIX }}*
             ${{ env.FILENAME }}
-          # Release说明文档（结构化呈现，方便用户查看）
           body: |
-            ### 仓库说明：AzerothCore Playerbot分支地图数据
-            本压缩包包含运行AzerothCore Playerbot分支所需的完整地图数据，具体内容：
-            - map：基础地图数据
-            - mmap：导航网格数据
-            - dbc：客户端数据库文件（含中文优化）
-            - vmap：可视地图碰撞数据
-            - Cameras：视角配置文件
-            - 优化点：增加中文dbc，解决机器人技能异常问题
-
-            ### 解压与使用说明
-            1. 若下载文件为分片（如dataxxx.zip.part00、dataxxx.zip.part01）：
-               - Linux/Mac系统：在分片文件目录执行 `cat dataxxx.zip.part* > dataxxx.zip` 合并
-               - Windows系统：在分片文件目录执行 `copy /b dataxxx.zip.part* dataxxx.zip` 合并
-            2. 合并完成后，用RAR、ZIP或7-Zip等工具解压最终的.zip文件即可使用
+                ### 本仓库是azerothcore playerbot分支的地图数据，包含以下内容：
+                   - map
+                   - mmap
+                   - dbc
+                   - vmap
+                   - Cameras
+                   - 增加中文dbc解决机器人的技能问题
+                   - 解压说明：
+                     1. 若为分片文件（如dataxxx.zip.part00），请先合并：
+                        - Linux/Mac: `cat dataxxx.zip.part* > dataxxx.zip`
+                        - Windows: `copy /b dataxxx.zip.part* dataxxx.zip`
+                     2. 再用rar或zip解压合并后的文件
         env:
-          # 授权Token（从仓库Secrets中获取，用于操作Release）
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
 
-      # 步骤6：清理历史Release，仅保留最新3个（避免存储冗余）
       - name: 保留最新3个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
-          keep_latest: 3    # 保留最新的3个Release
-          delete_tags: true # 同时删除与旧Release关联的Git标签
+          keep_latest: 3
+          delete_tags: true
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
