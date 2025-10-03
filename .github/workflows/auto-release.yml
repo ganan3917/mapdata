@@ -7,35 +7,56 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    name: 打包地图数据并发布
     steps:
-      - name: 拉取代码
+      - name: 📥 拉取代码仓库
         uses: actions/checkout@v4
 
-      - name: 设置压缩包名称
+      - name: 🔧 设置文件名称
         id: set_filename
         run: |
+          # 生成带时间戳的唯一文件名（格式：data+年月日时分秒）
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
           # 定义分片文件前缀（用于后续上传所有分片）
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
+          echo "✅ 文件名设置完成：${{ env.FILENAME }}"
 
-      - name: 打包文件（使用zip）
+      - name: 📦 打包地图数据
         run: |
+          echo "开始打包文件，排除冗余目录..."
+          # 打包当前目录并排除Git相关文件、工作流配置和已有zip包
           zip -r ${{ env.FILENAME }} . \
-            -x ".git/" -x ".gitignore" -x ".github/workflows/" -x "*.zip"
+            -x ".git/*" \
+            -x ".gitignore" \
+            -x ".github/workflows/*" \
+            -x "*.zip"
+          # 显示打包后的文件大小
+          echo "✅ 打包完成，文件大小：$(du -h ${{ env.FILENAME }})"
 
-      - name: 拆分大文件（如果超过1.8GB）
+      - name: ✂️ 拆分大文件（超过1.5GB时）
         run: |
-          # 检查文件大小（单位：字节），超过1.8GB则拆分
+          # 1.5GB = 1610612736字节（预留空间避免超GitHub限制）
+          MAX_SIZE=$((1500 * 1024 * 1024))  # 1500MB
           FILE_SIZE=$(stat -c%s "${{ env.FILENAME }}")
-          if [ $FILE_SIZE -gt 1932735283 ]; then  # 1.8GB = 1932735283字节
-            # 拆分为多个1.8GB的分片（-b 1800m指定每个分片大小）
-            split -b 1800m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
-            # 删除原始大文件（避免上传时触发限制）
+          
+          echo "检测文件大小：$((FILE_SIZE / 1024 / 1024))MB"
+          
+          if [ $FILE_SIZE -gt $MAX_SIZE ]; then
+            echo "文件超过1.5GB，开始拆分..."
+            # 拆分为1.5GB/个的分片（-d使用数字后缀，-a 2指定2位数字）
+            split -b 1500m -d -a 2 "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
+            # 显示拆分后的文件列表
+            echo "拆分结果："
+            ls -lh "${{ env.SPLIT_PREFIX }}"*
+            # 删除原始大文件，避免上传时触发限制
             rm -f "${{ env.FILENAME }}"
+            echo "✅ 拆分完成，共生成$(ls "${{ env.SPLIT_PREFIX }}"* | wc -l)个分片"
+          else
+            echo "文件未超过1.5GB，无需拆分"
           fi
 
-      - name: 上传到Release（支持分片文件）
+      - name: 🚀 上传到Release
         uses: softprops/action-gh-release@v2
         with:
           name: 自动打包-${{ env.FILENAME }}
@@ -45,25 +66,41 @@ jobs:
             ${{ env.SPLIT_PREFIX }}*
             ${{ env.FILENAME }}
           body: |
-                ### 本仓库是azerothcore playerbot分支的地图数据，包含以下内容：
-                   - map
-                   - mmap
-                   - dbc
-                   - vmap
-                   - Cameras
-                   - 增加中文dbc解决机器人的技能问题
-                   - 解压说明：
-                     1. 若为分片文件（如dataxxx.zip.part00），请先合并：
-                        - Linux/Mac: `cat dataxxx.zip.part* > dataxxx.zip`
-                        - Windows: `copy /b dataxxx.zip.part* dataxxx.zip`
-                     2. 再用rar或zip解压合并后的文件
+            ### AzerothCore Playerbot分支地图数据
+            
+            本压缩包包含运行AzerothCore Playerbot分支所需的完整地图数据，具体内容：
+            - map：地图基础数据
+            - mmap：导航网格数据
+            - dbc：客户端数据库文件（含中文优化）
+            - vmap：可视地图数据
+            - Cameras：视角配置文件
+            - 特别优化：中文DBC文件解决机器人技能显示及执行问题
+            
+            ---
+            
+            ### 📝 下载与使用说明
+            1. **完整文件**（未分片）：直接下载`.zip`文件，用压缩软件解压即可
+            2. **分片文件**（如`dataxxx.zip.part00`）：
+               - **Windows系统**：
+                 1. 将所有分片文件放在同一文件夹
+                 2. 打开命令提示符（CMD），进入该文件夹
+                 3. 执行命令：`copy /b dataxxx.zip.part* dataxxx.zip`（将`dataxxx`替换为实际前缀）
+               - **Linux/Mac系统**：
+                 1. 将所有分片文件放在同一目录
+                 2. 打开终端，进入该目录
+                 3. 执行命令：`cat dataxxx.zip.part* > dataxxx.zip`（将`dataxxx`替换为实际前缀）
+               - 合并完成后，得到完整`.zip`文件，解压即可使用
+            
+            ---
+            
+            提示：合并后的文件与原始文件校验一致，可放心使用
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
 
-      - name: 保留最新3个Release
+      - name: 🧹 清理历史版本
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
-          keep_latest: 3
-          delete_tags: true
+          keep_latest: 3  # 仅保留最新3个Release
+          delete_tags: true  # 同时删除对应的标签
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
