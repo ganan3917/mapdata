@@ -1,2 +1,6 @@
-# azerothcore-data
- - azcore核心的地图数据文件
+### azerothcore-地图数据，包含以下文件
+ - map
+ - mmap
+ - dbc
+ - vmap
+ - Cameras
