@@ -17,15 +17,6 @@ jobs:
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
 
-      - name: 读取Readme内容作为Release描述
-        id: read_readme
-        run: |
-          # 读取Readme.md内容，处理特殊字符（如换行符）
-          README_CONTENT=$(cat README.md | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
-          echo "README_CONTENT<<EOF" >> $GITHUB_ENV
-          echo "$README_CONTENT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
       - name: 打包文件
         run: |
           zip -r ${{ env.FILENAME }} . \
@@ -37,7 +28,13 @@ jobs:
           name: 自动打包-${{ env.FILENAME }}
           tag_name: ${{ env.FILENAME }}
           files: ${{ env.FILENAME }}
-          body: ${{ env.README_CONTENT }}  # 这里填入Readme内容作为Release描述
+          body: |
+                ### azerothcore-地图数据，包含以下文件
+                   - map
+                   - mmap
+                   - dbc
+                   - vmap
+                   - Cameras
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
 
