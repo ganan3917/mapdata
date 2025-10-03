@@ -16,7 +16,7 @@ jobs:
     - name: Delete Old Workflows
       uses: Mattraks/delete-workflow-runs@main
       with:
-        token: ${{ DEL_GITHUB_TOKEN }}
+        token: ${{ secrets.DEL_GITHUB_TOKEN }}
         retain_days: 3
         keep_minimum_runs: 0
 
@@ -26,4 +26,4 @@ jobs:
         keep_latest: 3
         delete_tags: true
       env:
-        GITHUB_TOKEN: ${{ DEL_GITHUB_TOKEN }}  # 移除多余的句号
+        GITHUB_TOKEN: ${{ secrets.DEL_GITHUB_TOKEN }}  # 移除多余的句号
