@@ -1,0 +1,60 @@
+name: 自动打包并发布
+
+on:
+  push:
+    branches: [ main ]  # 监听主分支推送，可根据需要修改
+  # 也可以添加定时触发，例如每天凌晨2点
+  # schedule:
+  #   - cron: '0 2 * * *'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 拉取完整历史，确保打包所有文件
+
+      - name: 设置打包时间
+        id: set-time
+        run: echo "TIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+
+      - name: 打包文件
+        run: |
+          # 创建打包目录
+          mkdir -p release
+          # 打包当前目录所有文件（排除.git和release目录）
+          tar -czf release/repo-${{ steps.set-time.outputs.TIME }}.tar.gz \
+            --exclude=.git \
+            --exclude=release \
+            .
+
+      - name: 创建Release
+        id: create-release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 自动打包 ${{ steps.set-time.outputs.TIME }}
+          tag_name: ${{ steps.set-time.outputs.TIME }}
+          files: release/*.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 清理旧版本（保留最新3个）
+        run: |
+          # 安装GitHub CLI
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update && sudo apt install gh -y
+          
+          # 配置GitHub CLI
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          
+          # 获取所有Release（按创建时间排序）并删除旧版本（保留最新3个）
+          gh release list --limit 100 --json tagName,createdAt --jq '. | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' | xargs -I {} gh release delete {} -y
+          
+          # 删除对应的tag
+          gh release list --limit 100 --json tagName,createdAt --jq '. | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' | xargs -I {} git push origin --delete {}
