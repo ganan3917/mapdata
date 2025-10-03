@@ -1,34 +1,29 @@
 name: 自动打包并上传Release
 
-# 触发条件：每次推送到主分支（可根据需要修改分支名）
 on:
   push:
-    branches: [ main ]  # 替换为你的目标分支（如master）
+    branches: [ main ]
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
     steps:
-      # 步骤1：拉取仓库代码
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      # 步骤2：生成带时间戳的压缩包名称（格式：data+年月日时分秒）
       - name: 设置压缩包名称
         id: set_filename
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
 
-      # 步骤3：打包仓库文件（排除.git目录和 workflows 配置目录）
       - name: 打包文件
         run: |
           zip -r ${{ env.FILENAME }} . \
             -x "*.git*" \
             -x "*.github/workflows/*" \
-            -x "*.zip"  # 排除已有的压缩包
+            -x "*.zip"
 
-      # 步骤4：创建Release并上传压缩包
       - name: 上传到Release
         uses: softprops/action-gh-release@v2
         with:
@@ -36,13 +31,12 @@ jobs:
           tag_name: ${{ env.FILENAME }}
           files: ${{ env.FILENAME }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 自动生成的token，无需手动配置
+          GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}  # 替换为自定义密钥名称
 
-      # 步骤5：清理旧Release（只保留最新3份）
       - name: 保留最新3个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
-          keep_latest: 3  # 保留最新3个Release
-          delete_tags: true  # 同时删除对应的标签
+          keep_latest: 3
+          delete_tags: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}  # 同样替换为自定义密钥名称
