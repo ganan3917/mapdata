@@ -15,12 +15,16 @@ jobs:
         id: set_filename
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-          echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
+          echo "FILENAME=data${TIMESTAMP}.tar.gz" >> $GITHUB_ENV  # 改为tar.gz格式
 
-      - name: 打包文件
+      - name: 打包文件（使用tar）
         run: |
-          zip -r ${{ env.FILENAME }} . \
-            -x ".git/" -x ".gitignore" -x ".github/workflows/" -x "*.zip"  # 优化排除规则
+          # 使用tar打包并压缩，排除指定目录和文件
+          tar -zcvf ${{ env.FILENAME }} . \
+            --exclude=".git" \
+            --exclude=".gitignore" \
+            --exclude=".github/workflows" \
+            --exclude="*.tar.gz"  # 排除已有的tar包
 
       - name: 上传到Release
         uses: softprops/action-gh-release@v2
@@ -29,12 +33,14 @@ jobs:
           tag_name: ${{ env.FILENAME }}
           files: ${{ env.FILENAME }}
           body: |
-                ### azerothcore-地图数据，包含以下文件
+                ### 本仓库是azerothcore playerbot分支的地图数据，包含以下内容：
                    - map
                    - mmap
                    - dbc
                    - vmap
                    - Cameras
+                   - 增加中文dbc解决机器人的技能问题
+                   - 解压使用rar或zip
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
 
