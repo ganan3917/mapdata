@@ -48,7 +48,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PACKAGE_TOKEN }}  # 引用自定义令牌
 
-      # 5. 清理旧版本：同步修改令牌引用
+      # 5. 清理旧版本：同步修改令牌引用 
       - name: 清理旧版本（保留最新3个）
         run: |
           set -e
