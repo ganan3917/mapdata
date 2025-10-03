@@ -2,59 +2,64 @@ name: 自动打包并发布
 
 on:
   push:
-    branches: [ main ]  # 监听主分支推送，可根据需要修改
-  # 也可以添加定时触发，例如每天凌晨2点
-  # schedule:
-  #   - cron: '0 2 * * *'
+    branches: [ main ]
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    
+    # （可选）添加并发控制，避免多实例冲突
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
     steps:
+      # 1. 拉取代码（无需修改，checkout 动作默认使用令牌）
       - name: 拉取代码
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 拉取完整历史，确保打包所有文件
+          fetch-depth: 0
 
+      # 2. 设置打包时间（无需修改）
       - name: 设置打包时间
         id: set-time
         run: echo "TIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
+      # 3. 打包文件（无需修改）
       - name: 打包文件
         run: |
-          # 创建打包目录
+          set -e  # 错误立即退出，增强稳定性
           mkdir -p release
-          # 打包当前目录所有文件（排除.git和release目录）
           tar -czf release/repo-${{ steps.set-time.outputs.TIME }}.tar.gz \
             --exclude=.git \
             --exclude=release \
+            --exclude=.github/workflows  # 可选：排除工作流文件，减少包体积
             .
 
+      # 4. 创建Release：将 env 中的 GITHUB_TOKEN 改为自定义令牌
       - name: 创建Release
         id: create-release
         uses: softprops/action-gh-release@v2
         with:
           name: 自动打包 ${{ steps.set-time.outputs.TIME }}
-          tag_name: ${{ steps.set-time.outputs.TIME }}
+          tag_name: v${{ steps.set-time.outputs.TIME }}  # 优化：添加 v 前缀，标签更规范
           files: release/*.tar.gz
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGE_TOKEN }}  # 引用自定义令牌
 
+      # 5. 清理旧版本：同步修改令牌引用
       - name: 清理旧版本（保留最新3个）
         run: |
-          # 安装GitHub CLI
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          set -e
+          # 安装GitHub CLI（若遇到原链接解析失败，可替换为官方GPG导入方式）
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
           sudo apt update && sudo apt install gh -y
           
-          # 配置GitHub CLI
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          # 用自定义令牌登录GH CLI
+          echo "${{ secrets.GH_PACKAGE_TOKEN }}" | gh auth login --with-token
           
-          # 获取所有Release（按创建时间排序）并删除旧版本（保留最新3个）
+          # 删除旧Release和标签（逻辑不变）
           gh release list --limit 100 --json tagName,createdAt --jq '. | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' | xargs -I {} gh release delete {} -y
-          
-          # 删除对应的tag
           gh release list --limit 100 --json tagName,createdAt --jq '. | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' | xargs -I {} git push origin --delete {}
