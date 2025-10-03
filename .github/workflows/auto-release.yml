@@ -1,65 +1,48 @@
-name: 自动打包并发布
+name: 自动打包并上传Release
 
+# 触发条件：每次推送到主分支（可根据需要修改分支名）
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]  # 替换为你的目标分支（如master）
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    # （可选）添加并发控制，避免多实例冲突
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
-
     steps:
-      # 1. 拉取代码（无需修改，checkout 动作默认使用令牌）
+      # 步骤1：拉取仓库代码
       - name: 拉取代码
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      # 2. 设置打包时间（无需修改）
-      - name: 设置打包时间
-        id: set-time
-        run: echo "TIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+      # 步骤2：生成带时间戳的压缩包名称（格式：data+年月日时分秒）
+      - name: 设置压缩包名称
+        id: set_filename
+        run: |
+          TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+          echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
 
-      # 3. 打包文件（无需修改）
+      # 步骤3：打包仓库文件（排除.git目录和 workflows 配置目录）
       - name: 打包文件
         run: |
-          set -e  # 错误立即退出，增强稳定性
-          mkdir -p release
-          tar -czf release/repo-${{ steps.set-time.outputs.TIME }}.tar.gz \
-            --exclude=.git \
-            --exclude=release \
-            --exclude=.github/workflows  # 可选：排除工作流文件，减少包体积
-            .
+          zip -r ${{ env.FILENAME }} . \
+            -x "*.git*" \
+            -x "*.github/workflows/*" \
+            -x "*.zip"  # 排除已有的压缩包
 
-      # 4. 创建Release：将 env 中的 GITHUB_TOKEN 改为自定义令牌
-      - name: 创建Release
-        id: create-release
+      # 步骤4：创建Release并上传压缩包
+      - name: 上传到Release
         uses: softprops/action-gh-release@v2
         with:
-          name: 自动打包 ${{ steps.set-time.outputs.TIME }}
-          tag_name: v${{ steps.set-time.outputs.TIME }}  # 优化：添加 v 前缀，标签更规范
-          files: release/*.tar.gz
-          draft: false
-          prerelease: false
+          name: 自动打包-${{ env.FILENAME }}
+          tag_name: ${{ env.FILENAME }}
+          files: ${{ env.FILENAME }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PACKAGE_TOKEN }}  # 引用自定义令牌
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 自动生成的token，无需手动配置
 
-      # 5. 清理旧版本：同步修改令牌引用 
-      - name: 清理旧版本（保留最新3个）
-        run: |
-          set -e
-          # 安装GitHub CLI（若遇到原链接解析失败，可替换为官方GPG导入方式）
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-          sudo apt update && sudo apt install gh -y
-          
-          # 用自定义令牌登录GH CLI
-          echo "${{ secrets.GH_PACKAGE_TOKEN }}" | gh auth login --with-token
-          
-          # 删除旧Release和标签（逻辑不变）
-          gh release list --limit 100 --json tagName,createdAt --jq '. | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' | xargs -I {} gh release delete {} -y
-          gh release list --limit 100 --json tagName,createdAt --jq '. | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' | xargs -I {} git push origin --delete {}
+      # 步骤5：清理旧Release（只保留最新3份）
+      - name: 保留最新3个Release
+        uses: dev-drprasad/delete-older-releases@v0.3.4
+        with:
+          keep_latest: 3  # 保留最新3个Release
+          delete_tags: true  # 同时删除对应的标签
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
