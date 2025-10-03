@@ -1,0 +1,2 @@
+# azerothcore-data
+azerothcore mapdata
