@@ -31,7 +31,7 @@ jobs:
           tag_name: ${{ env.FILENAME }}
           files: ${{ env.FILENAME }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}  # 替换为自定义密钥名称
+          GITHUB_TOKEN: ${{ CUSTOM_GITHUB_TOKEN }}  # 替换为自定义密钥名称
 
       - name: 保留最新3个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
@@ -39,4 +39,4 @@ jobs:
           keep_latest: 3
           delete_tags: true
         env:
-          GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}  # 同样替换为自定义密钥名称
+          GITHUB_TOKEN: ${{ CUSTOM_GITHUB_TOKEN }}  # 同样替换为自定义密钥名称
