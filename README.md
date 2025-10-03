@@ -1,4 +1,6 @@
- ### 本仓库是azerothcore playerbot分支的地图数据，包含以下内容：
+ ### 本仓库是azerothcore核心，带playerbot模块的地图数据。
+ 
+ 包含以下内容：
  - map
 - mmap
 - dbc
