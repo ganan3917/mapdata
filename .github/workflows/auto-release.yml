@@ -15,16 +15,13 @@ jobs:
         id: set_filename
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-          echo "FILENAME=data${TIMESTAMP}.tar.gz" >> $GITHUB_ENV  # 改为tar.gz格式
+          echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV  # 换回zip格式
 
-      - name: 打包文件（使用tar）
+      - name: 打包文件（使用zip）
         run: |
-          # 使用tar打包并压缩，排除指定目录和文件
-          tar -zcvf ${{ env.FILENAME }} . \
-            --exclude=".git" \
-            --exclude=".gitignore" \
-            --exclude=".github/workflows" \
-            --exclude="*.tar.gz"  # 排除已有的tar包
+          # 使用zip打包，排除指定目录和文件
+          zip -r ${{ env.FILENAME }} . \
+            -x ".git/" -x ".gitignore" -x ".github/workflows/" -x "*.zip"  # 排除规则适配zip
 
       - name: 上传到Release
         uses: softprops/action-gh-release@v2
@@ -44,10 +41,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
 
-      - name: 保留最新3个Release
+      - name: 保留最新2个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
-          keep_latest: 3
+          keep_latest: 2
           delete_tags: true
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
