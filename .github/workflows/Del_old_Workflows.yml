@@ -1,20 +1,20 @@
 name: Delete_Old_Workflows
 
 on:
-  workflow_dispatch:  # 支持手动触发
+  workflow_dispatch:
   schedule:
-    - cron: 0 19 * * *  # 每天UTC 19点自动运行（可根据需求调整时间）
+    - cron: 0 19 * * *
 
 jobs:
   Clean-Workflows:
     runs-on: ubuntu-22.04
     permissions:
-      actions: write  # 授予删除工作流运行记录的权限
+      actions: write
 
     steps:
       - name: Delete old workflow runs
         uses: Mattraks/delete-workflow-runs@main
         with:
           token: ${{ secrets.DEL_GITHUB_TOKEN }}
-          keep_minimum_runs: 2  # 保留最新的3次运行记录
-          retain_days: 0  # 不按天数限制（设为0表示禁用天数过滤）
+          keep_minimum_runs: 2
+          retain_days: 0
