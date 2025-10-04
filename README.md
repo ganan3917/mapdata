@@ -1,4 +1,4 @@
- ### 本仓库是azerothcore核心，带playerbot模块的地图数据。
+ ### 本仓库是azerothcore核心，带playerbot模块的地图数据，不带模块也可以使用。
  
  包含以下内容：
  - map
