@@ -8,7 +8,16 @@
 - Cameras
 - 增加中文dbc解决机器人的技能问题
 - 解压说明：
-   1. 若为分片文件（如dataxxx.zip.part00），请先合并：
-      - Linux/Mac: `cat dataxxx.zip.part* > dataxxx.zip`
-      - Windows: `copy /b dataxxx.zip.part* dataxxx.zip`
-   2. 再用rar或zip解压合并后的文件
+   1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件
+---
+
+### This repository contains the AzerothCore core, map data with the Playerbot module, and can also be used without the module.
+It includes the following contents:
+- map
+- mmap
+- dbc
+- vmap
+- Cameras
+- Added Chinese DBC to solve the skill issues of the bot.
+- Extraction instructions:
+For split-volume files (e.g., dataxxx.zip.part00...dataxxx.zip.part01), place them in the same folder, then use WinRAR or 7-Zip to extract the files.
