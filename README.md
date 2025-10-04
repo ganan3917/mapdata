@@ -1,3 +1,4 @@
+[![Auto Package and Upload Release](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml/badge.svg?branch=main&event=release)](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml)
  ### 本仓库是AzerothCore-WoTLK通用地图数据。
  
  包含以下内容：
