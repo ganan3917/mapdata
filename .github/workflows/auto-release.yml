@@ -61,7 +61,7 @@ jobs:
                         - Windows: `copy /b dataxxx.zip.part* dataxxx.zip`
                      2. 再用rar或zip解压合并后的文件
         env:
-          GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
 
       - name: 保留最新3个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
@@ -69,4 +69,4 @@ jobs:
           keep_latest: 3
           delete_tags: true
         env:
-          GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
