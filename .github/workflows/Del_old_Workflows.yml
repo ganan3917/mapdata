@@ -1,4 +1,4 @@
-name: Delete_Old_Workflows_Keep_1Day
+name: Delete_Old_Workflows3
 
 on:
   workflow_dispatch:  # 支持手动触发
@@ -12,9 +12,9 @@ jobs:
       actions: write  # 授予删除工作流运行记录的权限
 
     steps:
-      - name: Delete workflow runs older than 1 day
+      - name: Delete old workflow runs, keep latest 3
         uses: Mattraks/delete-workflow-runs@main
         with:
           token: ${{ secrets.DEL_GITHUB_TOKEN }}
-          retain_days: 1  # 保留最近1天的记录
-          keep_minimum_runs: 0  # 不强制保留最小数量（仅按天数保留）
+          keep_minimum_runs: 3  # 保留最新的3次运行记录
+          retain_days: 0  # 不按天数限制（设为0表示禁用天数过滤）
