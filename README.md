@@ -1,4 +1,4 @@
- ### 本仓库是azerothcore通用地图数据。
+ ### 本仓库是AzerothCore-WoTLK通用地图数据。
  
  包含以下内容：
  - map
@@ -11,7 +11,7 @@
      - 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件
 ---
 
-### This repository contains universal map data for AzerothCore.
+### This repository contains universal map data for AzerothCore-WoTLK.
 It includes the following contents:
 - map
 - mmap
