@@ -1,9 +1,12 @@
-name: 自动打包并上传Release
+name: Auto Package and Upload Release
 
 on:
   push:
     branches: [ main ]
-
+  workflow_dispatch:  # 支持手动触发
+  schedule:
+    - cron: 0 19 * * *  # 每天UTC 19点自动运行（可根据需求调整时间）
+    
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
