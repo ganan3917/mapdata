@@ -1,6 +1,4 @@
-[![Auto Package and Upload Release](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml/badge.svg?event=workflow_run)](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml)
-
-[![Auto Package and Upload Release](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml/badge.svg?event=status)](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml)
+[![Auto Package and Upload Release](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml/badge.svg)](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml)
  ### 本仓库是AzerothCore-WoTLK通用地图数据。
  
  包含以下内容：
