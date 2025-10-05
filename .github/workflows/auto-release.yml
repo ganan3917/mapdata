@@ -1,4 +1,4 @@
-name: Auto Package and Upload Release
+name: auto-release
 
 on:
   workflow_dispatch:
