@@ -64,7 +64,7 @@ jobs:
       - name: 保留最新3个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
-          keep_latest: 3
+          keep_latest: 1
           delete_tags: true
         env:
           GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
