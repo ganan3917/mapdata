@@ -37,6 +37,10 @@ jobs:
         with:
           name: Release_${{ env.FILENAME }}
           tag: ${{ env.FILENAME }}
+          artifacts: |
+            ${{ env.SPLIT_PREFIX }}*
+            ${{ env.FILENAME }}
+          replacesArtifacts: true
           body: |
                 ### 本仓库是AzerothCore-WoTLK的通用地图数据。
                    - map
@@ -47,12 +51,6 @@ jobs:
                    - 增加中文dbc解决机器人的技能问题
                    - 解压说明：
                       1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件。
-          artifacts: |
-            ${{ env.SPLIT_PREFIX }}*
-            ${{ env.FILENAME }}
-          replacesArtifacts: true
-          draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
 
