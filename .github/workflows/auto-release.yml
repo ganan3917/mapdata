@@ -15,9 +15,8 @@ jobs:
       - name: 设置压缩包名称
         id: set_filename
         run: |
-          TIMESTAMP=$(date +"%Y%m%d%")
+          TIMESTAMP=$(date +"%Y%m%d")
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
-          # 定义分片文件前缀（用于后续上传所有分片）
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
 
       - name: 打包文件（使用zip）
@@ -25,26 +24,17 @@ jobs:
           zip -r ${{ env.FILENAME }} . \
             -x ".git/" -x ".gitignore" -x ".github/workflows/" -x "*.zip"
 
-      - name: 拆分大文件（如果超过1.8GB）
+      - name: 按1GB拆分文件
         run: |
-          # 检查文件大小（单位：字节），超过1.8GB则拆分
-          FILE_SIZE=$(stat -c%s "${{ env.FILENAME }}")
-          if [ $FILE_SIZE -gt 1932735283 ]; then  # 1.8GB = 1932735283字节
-            # 拆分为多个1.8GB的分片（-b 1800m指定每个分片大小）
-            split -b 1800m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
-            # 删除原始大文件（避免上传时触发限制）
-            rm -f "${{ env.FILENAME }}"
-          fi
+          split -b 1000m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
+          rm -f "${{ env.FILENAME }}"
 
-      - name: 上传到Release（支持分片文件）
-        uses: softprops/action-gh-release@v2
+      - name: 上传到Release（分片文件）
+        uses: ncipollo/release-action@v1.14.0
         with:
           name: Release-${{ env.FILENAME }}
-          tag_name: ${{ env.FILENAME }}
-          # 上传所有分片（如果拆分了）或原始文件
-          files: |
-            ${{ env.SPLIT_PREFIX }}*
-            ${{ env.FILENAME }}
+          tag: ${{ env.FILENAME }}  # ncipollo使用tag参数而非tag_name
+          artifacts: "${{ env.SPLIT_PREFIX }}*"  # 对应files参数，需用引号包裹
           body: |
                 ### 本仓库是AzerothCore-WoTLK的通用地图数据，包含以下内容：
                    - map
@@ -54,12 +44,8 @@ jobs:
                    - Cameras
                    - 增加中文dbc解决机器人的技能问题
                    - 解压说明：
-                     1. 若为分片文件（如dataxxx.zip.part00），请先合并：
-                        - Linux/Mac: `cat dataxxx.zip.part* > dataxxx.zip`
-                        - Windows: `copy /b dataxxx.zip.part* dataxxx.zip`
-                     2. 再用rar或zip解压合并后的文件
-        env:
-          GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
+                     1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件。
+          token: ${{ secrets.BUILD_DATA }}  # 认证参数名为token而非GITHUB_TOKEN
 
       - name: 保留最新1个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
