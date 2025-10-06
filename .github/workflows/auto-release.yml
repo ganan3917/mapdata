@@ -16,7 +16,7 @@ jobs:
         id: set_filename
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-          echo "FILENAME=data${TIMESTAMP}.tar.gz" >> $GITHUB_ENV  # 改为tar.gz格式
+          echo "FILENAME=data${TIMESTAMP}.tar.gz" >> $GITHUB_ENV
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
 
       - name: 打包文件（使用tar）
@@ -26,12 +26,12 @@ jobs:
             --exclude=".git/" \
             --exclude=".gitignore" \
             --exclude=".github/workflows/" \
-            --exclude="*.tar.gz"  # 排除已存在的tar包
+            --exclude="*.tar.gz"
 
       - name: 按1GB拆分文件
         run: |
           split -b 1024m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
-          rm -f "${{ env.FILENAME }}"  # 拆分后删除原文件
+          rm -f "${{ env.FILENAME }}"
 
       - name: 上传到Release（分片文件）
         uses: ncipollo/release-action@v1.14.0
@@ -49,7 +49,7 @@ jobs:
                    - 增加中文dbc解决机器人的技能问题
                    - 解压说明：
                      1. 分卷文件（如dataxxx.tar.gz.part00...dataxxx.tar.gz.part02），
-                        请放在相同的文件夹里，再使用winrar或7zip解压文件（需先合并分卷）。
+                        请放在相同的文件夹里，再使用winrar或7zip解压文件。
           token: ${{ secrets.BUILD_DATA }}
 
       - name: 保留最新1个Release
