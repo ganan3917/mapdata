@@ -12,48 +12,48 @@ jobs:
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      - name: 设置名称
-        id: set_filename
+      - name: 设置时间戳变量
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-          # 直接定义文件名和分卷前缀，避免跨变量引用
-          echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
-          echo "SPLIT_PREFIX=data${TIMESTAMP}.zip.part" >> $GITHUB_ENV
+          echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
 
-      - name: 打包文件
+      - name: 分别打包目录
         run: |
-          zip -r ${{ env.FILENAME }} . \
-            -x ".git/" -x ".gitignore" -x ".github/workflows/" -x "*.zip"
-
-      - name: 拆分文件
-        run: |
-          FILE_SIZE=$(stat -c%s "${{ env.FILENAME }}")
-          if [ $FILE_SIZE -gt 1400000000 ]; then
-            split -b 1500m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
-            rm -f "${{ env.FILENAME }}"
-          fi
+          # 定义需要打包的目录列表
+          dirs=("dbc" "maps" "mmaps" "vmaps" "Cameras")
+          
+          # 循环打包每个目录
+          for dir in "${dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              zip -r "${dir}_${{ env.TIMESTAMP }}.zip" "$dir"
+            else
+              echo "警告：目录 $dir 不存在，跳过打包"
+            fi
+          done
 
       - name: 上传到Release
         uses: softprops/action-gh-release@v2
         with:
-         name: Release_${{ env.FILENAME }}
-         tag_name: ${{ env.FILENAME }}
-         files: |
-              ${{ env.SPLIT_PREFIX }}*
-              ${{ env.FILENAME }}
-         replace: true
-         body: |
-              ### 本仓库是AzerothCore-WoTLK的通用地图数据。
-               - map
-               - mmap
-               - dbc
-               - vmap
-               - Cameras
-               - 增加中文dbc解决机器人的技能问题
-               - 解压说明：
-                1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件。
+          name: Release_${{ env.TIMESTAMP }}
+          tag_name: release_${{ env.TIMESTAMP }}
+          files: |
+            dbc_${{ env.TIMESTAMP }}.zip
+            maps_${{ env.TIMESTAMP }}.zip
+            mmaps_${{ env.TIMESTAMP }}.zip
+            vmaps_${{ env.TIMESTAMP }}.zip
+            Cameras_${{ env.TIMESTAMP }}.zip
+          replace: true
+          body: |
+            ### 本仓库是AzerothCore-WoTLK的通用地图数据
+            包含以下独立打包的目录：
+            - dbc_${{ env.TIMESTAMP }}.zip
+            - maps_${{ env.TIMESTAMP }}.zip
+            - mmaps_${{ env.TIMESTAMP }}.zip
+            - vmaps_${{ env.TIMESTAMP }}.zip
+            - Cameras_${{ env.TIMESTAMP }}.zip
+            - 增加中文dbc解决机器人的技能问题
         env:
-            GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
+          GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
 
       - name: 保留最新1个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
