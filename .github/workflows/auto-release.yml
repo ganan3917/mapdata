@@ -32,9 +32,9 @@ jobs:
       - name: 上传到Release（分片文件）
         uses: ncipollo/release-action@v1.14.0
         with:
-          name: Release-${{ env.FILENAME }}
-          tag: ${{ env.FILENAME }}  # ncipollo使用tag参数而非tag_name
-          artifacts: "${{ env.SPLIT_PREFIX }}*"  # 对应files参数，需用引号包裹
+          name: Release_${{ env.FILENAME }}
+          tag: ${{ env.FILENAME }}
+          artifacts: "${{ env.SPLIT_PREFIX }}*"
           body: |
                 ### 本仓库是AzerothCore-WoTLK的通用地图数据，包含以下内容：
                    - map
@@ -44,7 +44,8 @@ jobs:
                    - Cameras
                    - 增加中文dbc解决机器人的技能问题
                    - 解压说明：
-                     1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件。
+                     1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），
+                        请放在相同的文件夹里,再使用winrar或7zip解压文件。
           token: ${{ secrets.BUILD_DATA }}  # 认证参数名为token而非GITHUB_TOKEN
 
       - name: 保留最新1个Release
