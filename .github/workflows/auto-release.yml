@@ -22,12 +22,13 @@ jobs:
       - name: 打包文件（tar.gz格式）
         run: |
           # 使用tar打包并压缩，排除指定目录和文件
-          tar -zcvf ${{ env.FILENAME }} . \
+          tar -zcvf ${{ env.FILENAME }} \
             --exclude=".git" \
             --exclude=".gitignore" \
             --exclude=".github/workflows" \
             --exclude="*.tar.gz" \
-            --exclude="*.part*"  # 排除可能存在的分卷文件
+            --exclude="*.part*" \
+            .
 
       - name: 拆分大文件（若超过1.4GB）
         run: |
