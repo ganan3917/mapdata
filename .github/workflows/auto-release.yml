@@ -12,30 +12,29 @@ jobs:
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      - name: 设置压缩包名称
+      - name: 设置名称
         id: set_filename
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-          echo "FILENAME=data${TIMESTAMP}.tar.gz" >> $GITHUB_ENV
+          echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
 
-      - name: 打包文件（使用tar）
+      - name: 打包文件
         run: |
-          # 排除指定目录和文件，打包为tar.gz
-          tar -zcvf ${{ env.FILENAME }} \
-            --exclude=".git/" \
-            --exclude=".gitignore" \
-            --exclude=".github/workflows/" \
-            --exclude="*.tar.gz" \
-            --warning=no-file-changed \ 
-            .
+          # 排除指定目录和文件，打包为zip（-q 静默模式，-r 递归打包）
+          zip -q -r ${{ env.FILENAME }} . \
+            -x ".git/*" \
+            -x ".gitignore" \
+            -x ".github/workflows/*" \
+            -x "*.tar.gz" \
+            -x "*.zip"
 
-      - name: 按1GB拆分文件
+      - name: 拆分文件
         run: |
           split -b 1024m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
           rm -f "${{ env.FILENAME }}"
 
-      - name: 上传到Release（分片文件）
+      - name: 上传Release
         uses: ncipollo/release-action@v1.14.0
         with:
           name: Release_${{ env.FILENAME }}
@@ -50,7 +49,7 @@ jobs:
                    - Cameras
                    - 增加中文dbc解决机器人的技能问题
                    - 解压说明：
-                     1. 分卷文件（如dataxxx.tar.gz.part00...dataxxx.tar.gz.part02），
+                     1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part02），
                         请放在相同的文件夹里，再使用winrar或7zip解压文件。
           token: ${{ secrets.BUILD_DATA }}
 
