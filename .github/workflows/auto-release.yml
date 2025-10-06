@@ -41,7 +41,7 @@ jobs:
       - name: 1.5G 分卷打包为 ZIP
         run: |
           # 定义打包参数：分卷大小 1.5G（单位支持 k/m/g，需小写）
-          VOLUME_SIZE="1.5g"
+          VOLUME_SIZE="1500m"
           # 打包文件名（分卷会自动添加 .001/.002 后缀）
           ZIP_NAME="repo-content.zip"
           # 排除不需要打包的文件（如 .git 目录、actions 配置目录等，按需修改）
