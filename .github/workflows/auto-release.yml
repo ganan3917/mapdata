@@ -16,43 +16,48 @@ jobs:
         id: set_filename
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-          echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
+          echo "FILENAME=data${TIMESTAMP}.tar.gz" >> $GITHUB_ENV
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
 
-      - name: 打包文件
+      - name: 打包文件（tar.gz格式）
         run: |
-          zip -r ${{ env.FILENAME }} . \
-            -x ".git/" -x ".gitignore" -x ".github/workflows/" -x "*.zip"
+          # 使用tar打包并压缩，排除指定目录和文件
+          tar -zcvf ${{ env.FILENAME }} . \
+            --exclude=".git" \
+            --exclude=".gitignore" \
+            --exclude=".github/workflows" \
+            --exclude="*.tar.gz" \
+            --exclude="*.part*"  # 排除可能存在的分卷文件
 
-      - name: 拆分文件
+      - name: 拆分大文件（若超过1.4GB）
         run: |
           FILE_SIZE=$(stat -c%s "${{ env.FILENAME }}")
           if [ $FILE_SIZE -gt 1400000000 ]; then
+            # 拆分为1500MB的分卷，使用数字后缀（00, 01...）
             split -b 1500m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
-            rm -f "${{ env.FILENAME }}"
+            rm -f "${{ env.FILENAME }}"  # 拆分后删除原始文件
           fi
 
       - name: 上传到Release
         uses: softprops/action-gh-release@v2
         with:
-         name: Release_${{ env.FILENAME }}
-         tag_name: ${{ env.FILENAME }}
-         files: |
-              ${{ env.SPLIT_PREFIX }}*
-              ${{ env.FILENAME }}
-         replace: true
-         body: |
-              ### 本仓库是AzerothCore-WoTLK的通用地图数据。
-               - map
-               - mmap
-               - dbc
-               - vmap
-               - Cameras
-               - 增加中文dbc解决机器人的技能问题
-               - 解压说明：
-                1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件。
+          name: Release_${{ env.FILENAME }}
+          tag_name: ${{ env.FILENAME }}
+          files: |
+            ${{ env.SPLIT_PREFIX }}*
+            ${{ env.FILENAME }}
+          replace: true
+          body: |
+            ### 本仓库是AzerothCore-WoTLK的通用地图数据。
+             - 包含map、mmap、dbc、vmap、Cameras
+             - 增加中文dbc解决机器人的技能问题
+             - 解压说明：
+              1. 分卷文件（如dataxxx.tar.gz.part00...dataxxx.tar.gz.part01）需放在同一文件夹
+              2. 合并分卷（Linux）：`cat dataxxx.tar.gz.part* > dataxxx.tar.gz`
+              3. 解压：`tar -zxvf dataxxx.tar.gz`
+              4. Windows用户可使用7-Zip直接解压分卷（自动合并）
         env:
-            GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
+          GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
 
       - name: 保留最新1个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
