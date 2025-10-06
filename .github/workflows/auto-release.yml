@@ -10,9 +10,9 @@ on:
         required: true
         default: 'v1.0.0'
       releaseTitle:    # 手动触发时输入 Release 标题
-        description: 'Data'
+        description: 'AzerothCore'
         required: true
-        default: '仓库内容分卷打包'
+        default: 'AzerothCore-WoTLK的通用地图数据'
       releaseNotes:    # 手动触发时输入 Release 备注
         description: 'Release 备注（可选）'
         required: false
