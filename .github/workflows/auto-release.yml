@@ -12,34 +12,33 @@ jobs:
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      - name: 设置压缩包名称
+      - name: 设置名称
         id: set_filename
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
 
-      - name: 打包文件（使用zip）
+      - name: 打包文件
         run: |
           zip -r ${{ env.FILENAME }} . \
             -x ".git/" -x ".gitignore" -x ".github/workflows/" -x "*.zip"
 
-      - name: 拆分大文件（按1.5GB拆分）
+      - name: 拆分文件
         run: |
           FILE_SIZE=$(stat -c%s "${{ env.FILENAME }}")
-          # 超过1.4GB时按1.5GB分片
           if [ $FILE_SIZE -gt 1400000000 ]; then
             split -b 1500m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
             rm -f "${{ env.FILENAME }}"
           fi
 
-      - name: 上传到Release（使用ncipollo/release-action）
+      - name: 上传到Release
         uses: ncipollo/release-action@v1
         with:
           name: Release_${{ env.FILENAME }}
-          tag: ${{ env.FILENAME }}  # 对应原tag_name
+          tag: ${{ env.FILENAME }}
           body: |
-                ### 本仓库是azerothcore playerbot分支的地图数据，包含以下内容：
+                ### 本仓库是AzerothCore-WoTLK的通用地图数据。
                    - map
                    - mmap
                    - dbc
@@ -47,19 +46,12 @@ jobs:
                    - Cameras
                    - 增加中文dbc解决机器人的技能问题
                    - 解压说明：
-                     1. 若为分片文件（如dataxxx.zip.part00），请先合并：
-                        - Linux/Mac: `cat dataxxx.zip.part* > dataxxx.zip`
-                        - Windows: `copy /b dataxxx.zip.part* dataxxx.zip`
-                     2. 再用rar或zip解压合并后的文件
-          # 上传文件（支持通配符）
+                      1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件。
           artifacts: |
             ${{ env.SPLIT_PREFIX }}*
             ${{ env.FILENAME }}
-          # 替换同名标签（避免标签已存在的错误）
           replaceArtifacts: true
-          # 生成草稿发布（可选，根据需要设置为false）
           draft: false
-          # 是否设为预发布（可选）
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
