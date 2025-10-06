@@ -26,7 +26,7 @@ jobs:
             --exclude=".git/" \
             --exclude=".gitignore" \
             --exclude=".github/workflows/" \
-            --exclude="*.tar.gz"
+            --exclude="*.tar.gz" \
             --warning=no-file-changed \
             ./
 
