@@ -15,7 +15,7 @@ jobs:
       - name: 设置压缩包名称
         id: set_filename
         run: |
-          TIMESTAMP=$(date +"%Y%m%d")
+          TIMESTAMP=$(date +"%Y%m%d%H%M")
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
 
@@ -46,7 +46,7 @@ jobs:
                    - 解压说明：
                      1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part02），
                         请放在相同的文件夹里,再使用winrar或7zip解压文件。
-          token: ${{ secrets.BUILD_DATA }}  # 认证参数名为token而非GITHUB_TOKEN
+          token: ${{ secrets.BUILD_DATA }}
 
       - name: 保留最新1个Release
         uses: dev-drprasad/delete-older-releases@v0.3.4
