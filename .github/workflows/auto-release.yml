@@ -15,7 +15,7 @@ jobs:
       - name: 设置压缩包名称
         id: set_filename
         run: |
-          TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+          TIMESTAMP=$(date +"%Y%m%d%")
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
           # 定义分片文件前缀（用于后续上传所有分片）
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
@@ -46,7 +46,7 @@ jobs:
             ${{ env.SPLIT_PREFIX }}*
             ${{ env.FILENAME }}
           body: |
-                ### 本仓库是azerothcore的地图数据，包含以下内容：
+                ### 本仓库是AzerothCore-WoTLK的通用地图数据，包含以下内容：
                    - map
                    - mmap
                    - dbc
