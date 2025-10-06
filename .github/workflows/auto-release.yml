@@ -59,9 +59,9 @@ jobs:
       ########################################################################
       - name: 创建 GitHub Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.BUILD.DATA }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         with:
           tag_name: ${{ github.event.inputs.releaseVersion }}
           release_name: ${{ github.event.inputs.releaseTitle }}
@@ -75,7 +75,7 @@ jobs:
       - name: 上传分卷文件到 Release
         uses: shogo82148/actions-upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.BUILD.DATA }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./repo-content.zip.*
