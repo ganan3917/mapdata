@@ -27,8 +27,8 @@ jobs:
             --exclude=".gitignore" \
             --exclude=".github/workflows/" \
             --exclude="*.tar.gz" \
-            --warning=no-file-changed \
-            ./
+            --warning=no-file-changed \ 
+            *
 
       - name: 按1GB拆分文件
         run: |
