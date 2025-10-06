@@ -39,14 +39,14 @@ jobs:
       - name: 上传到Release（支持分片文件）
         uses: softprops/action-gh-release@v2
         with:
-          name: Auto_Release -${{ env.FILENAME }}
+          name: Release-${{ env.FILENAME }}
           tag_name: ${{ env.FILENAME }}
           # 上传所有分片（如果拆分了）或原始文件
           files: |
             ${{ env.SPLIT_PREFIX }}*
             ${{ env.FILENAME }}
           body: |
-                ### 本仓库是azerothcore playerbot分支的地图数据，包含以下内容：
+                ### 本仓库是azerothcore的地图数据，包含以下内容：
                    - map
                    - mmap
                    - dbc
