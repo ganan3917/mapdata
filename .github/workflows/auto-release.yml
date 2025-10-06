@@ -16,8 +16,9 @@ jobs:
         id: set_filename
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+          # 直接定义文件名和分卷前缀，避免跨变量引用
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
-          echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
+          echo "SPLIT_PREFIX=data${TIMESTAMP}.zip.part" >> $GITHUB_ENV
 
       - name: 打包文件
         run: |
