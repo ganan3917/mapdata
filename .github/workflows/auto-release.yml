@@ -50,7 +50,7 @@ jobs:
           artifacts: |
             ${{ env.SPLIT_PREFIX }}*
             ${{ env.FILENAME }}
-          replaceArtifacts: true
+          replacesArtifacts: true
           draft: false
           prerelease: false
         env:
