@@ -15,7 +15,7 @@ jobs:
       - name: 设置压缩包名称
         id: set_filename
         run: |
-          TIMESTAMP=$(date +"%Y%m%d%H%M")
+          TIMESTAMP=$(date +"%Y%m%d%H%M%S")
           echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
           echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
 
