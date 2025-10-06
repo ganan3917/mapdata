@@ -1,84 +1,63 @@
 name: auto-release
 
-  
-# 触发条件：支持手动触发 + 推送代码到 main 分支触发（可按需修改）
 on:
-  workflow_dispatch:  # 手动触发（推荐，避免频繁打包）
-    inputs:
-      releaseVersion:  # 手动触发时需输入 Release 版本号（如 v1.0.0）
-        description: 'Release 版本号（格式：vX.Y.Z，如 v1.0.0）'
-        required: true
-        default: 'v1.0.0'
-      releaseTitle:    # 手动触发时输入 Release 标题
-        description: 'AzerothCore'
-        required: true
-        default: 'AzerothCore-WoTLK的通用地图数据'
-      releaseNotes:    # 手动触发时输入 Release 备注
-        description: 'Release 备注（可选）'
-        required: false
-        default: '仓库内容按 1.5G 分卷打包的 ZIP 文件'
-
-permissions:
-  contents: write
-  
+  workflow_dispatch:
+  schedule:
+    - cron: 0 19 * * *
+    
 jobs:
-  build-and-upload:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
-      ########################################################################
-      # 步骤 1：检出仓库代码
-      ########################################################################
-      - name: 检出仓库代码
+      - name: 拉取代码
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # 检出完整历史（若仓库含大文件/子模块，需保留此配置）
 
-      ########################################################################
-      # 步骤 2：安装 zip 工具（Ubuntu 默认已安装，此步骤为兼容保险）
-      ########################################################################
-      - name: 安装 zip 工具
-        run: sudo apt-get update && sudo apt-get install -y zip
-
-      ########################################################################
-      # 步骤 3：按 1.5G 分卷打包仓库内容
-      ########################################################################
-      - name: 1.5G 分卷打包为 ZIP
+      - name: 设置名称
+        id: set_filename
         run: |
-          # 定义打包参数：分卷大小 1.5G（单位支持 k/m/g，需小写）
-          VOLUME_SIZE="1500m"
-          # 打包文件名（分卷会自动添加 .001/.002 后缀）
-          ZIP_NAME="repo-content.zip"
-          # 排除不需要打包的文件（如 .git 目录、actions 配置目录等，按需修改）
-          EXCLUDE_FILES="--exclude=*.git* --exclude=.github/workflows/* --exclude=*.zip*"
-          
-          # 执行分卷打包命令（将当前目录所有文件打包，排除指定文件）
-          zip -r -s $VOLUME_SIZE $ZIP_NAME . $EXCLUDE_FILES
-          
-          # 查看打包结果（可选，用于日志调试）
-          echo "打包完成，文件列表："
-          ls -lh $ZIP_NAME*
+          TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+          echo "FILENAME=data${TIMESTAMP}.zip" >> $GITHUB_ENV
+          echo "SPLIT_PREFIX=${{ env.FILENAME }}.part" >> $GITHUB_ENV
 
-      ########################################################################
-      # 步骤 4：创建 GitHub Release
-      ########################################################################
-      - name: 创建 GitHub Release
-        id: create_release
+      - name: 打包文件
+        run: |
+          zip -r ${{ env.FILENAME }} . \
+            -x ".git/" -x ".gitignore" -x ".github/workflows/" -x "*.zip"
+
+      - name: 拆分文件
+        run: |
+          FILE_SIZE=$(stat -c%s "${{ env.FILENAME }}")
+          if [ $FILE_SIZE -gt 1400000000 ]; then
+            split -b 1500m -d "${{ env.FILENAME }}" "${{ env.SPLIT_PREFIX }}"
+            rm -f "${{ env.FILENAME }}"
+          fi
+
+      - name: 上传到Release
         uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         with:
-          tag_name: ${{ github.event.inputs.releaseVersion }}
-          name: ${{ github.event.inputs.releaseTitle }}
-          body: |
-                ### 本仓库是AzerothCore-WoTLK的通用地图数据。
-                    - map
-                    - mmap
-                    - dbc
-                    - vmap
-                    - Cameras
-                    - 增加中文dbc解决机器人的技能问题
-                    - 解压说明：
-                        - 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件。
-          draft: false
-          prerelease: false
-          files: ./repo-content.zip.*
+         name: Release_${{ env.FILENAME }}
+         tag_name: ${{ env.FILENAME }}
+         files: |
+              ${{ env.SPLIT_PREFIX }}*
+              ${{ env.FILENAME }}
+         replace: true
+         body: |
+              ### 本仓库是AzerothCore-WoTLK的通用地图数据。
+               - map
+               - mmap
+               - dbc
+               - vmap
+               - Cameras
+               - 增加中文dbc解决机器人的技能问题
+               - 解压说明：
+                1. 分卷文件（如dataxxx.zip.part00...dataxxx.zip.part01），请放在相同的文件夹里,再使用winrar或7zip解压文件。
+        env:
+            GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
+
+      - name: 保留最新1个Release
+        uses: dev-drprasad/delete-older-releases@v0.3.4
+        with:
+          keep_latest: 1
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
