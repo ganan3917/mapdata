@@ -1,5 +1,5 @@
 [![Auto Package and Upload Release](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml/badge.svg)](https://github.com/ganan3917/azerothcore-data/actions/workflows/auto-release.yml)
- ### 本仓库是AzerothCore-WoTLK的通用地图数据。
+ ### 本仓库是AzerothCore-WoTLK的地图数据。
  
  包含以下内容：
 - map
@@ -10,7 +10,7 @@
 
 ---
 
-### This repository contains universal map data for AzerothCore-WoTLK.
+### This repository contains map data for AzerothCore-WoTLK.
 It includes the following contents:
 - map
 - mmap
