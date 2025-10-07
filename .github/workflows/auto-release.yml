@@ -45,13 +45,12 @@ jobs:
           replace: true
           body: |
             ### 本仓库是AzerothCore-WoTLK的通用地图数据
-            包含以下独立打包的目录：
+            以下是独立打包的目录：
             - dbc_${{ env.TIMESTAMP }}.zip
             - maps_${{ env.TIMESTAMP }}.zip
             - mmaps_${{ env.TIMESTAMP }}.zip
             - vmaps_${{ env.TIMESTAMP }}.zip
             - Cameras_${{ env.TIMESTAMP }}.zip
-            - 增加中文dbc解决机器人的技能问题
         env:
           GITHUB_TOKEN: ${{ secrets.BUILD_DATA }}
 
