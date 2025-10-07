@@ -4,7 +4,7 @@
  包含以下内容：
 - map
 - mmap
-- dbc 包含enus、zhcn解决机器人技能和游戏语言的兼容问题
+- dbc（包含en-US、zh-CN解决机器人技能和游戏语言的兼容问题）
 - vmap
 - Cameras
 
@@ -14,6 +14,6 @@
 It includes the following contents:
 - map
 - mmap
-- dbc
+- dbc (Including en-US and zh-CN to address the compatibility issues between robot skills and game languages)
 - vmap
 - Cameras
