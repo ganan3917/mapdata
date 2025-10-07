@@ -10,7 +10,7 @@
 
 ---
 
-### This repository contains map data for AzerothCore-WoTLK.
+### This repository map data for AzerothCore-WoTLK.
 It includes the following contents:
 - map
 - mmap
