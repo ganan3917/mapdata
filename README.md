@@ -17,6 +17,3 @@ It includes the following contents:
 - dbc
 - vmap
 - Cameras
-- Added Chinese DBC to solve the skill issues of the bot.
-- Extraction instructions:
-   - For split-volume files (e.g., dataxxx.zip.part00...dataxxx.zip.part01), place them in the same folder, then use WinRAR or 7-Zip to extract the files.
