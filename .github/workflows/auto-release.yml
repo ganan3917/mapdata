@@ -15,7 +15,7 @@ jobs:
       - name: 设置时间戳变量
         run: |
           export TZ=Asia/Shanghai
-          TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+          TIMESTAMP=$(date +"%Y%m%d%H%M")
           echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
 
       - name: 分别打包目录
